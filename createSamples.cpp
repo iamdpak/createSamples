@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     input_directory = argv[2];
     output_file = argv[1];
 #else
-    input_directory = "/home/deepak/workspace/crowdCount/Data/";
+    input_directory = "Data/";
     output_file = "positive.txt";
 #endif
 
