@@ -1,6 +1,6 @@
-/***************objectmarker.cpp******************
+/***************createSamples.cpp******************
 
-Objectmarker for marking the objects to be detected  from positive samples and then creating the
+createSamples for marking the objects to be detected  from positive samples and then creating the
 description file for positive images.
 
 compile this code and run with two arguments, first one the name of the descriptor file and the second one
@@ -13,6 +13,7 @@ while running this code, each image in the given directory will open up. Now mar
   *the key B was chosen  to move to the next image because it is closer to SPACE key and nothing else.....
 
 author: achu_wilson@rediffmail.com
+modified by: iamdpakgre@gmail.com
 */
 
 #include "opencv2/highgui/highgui.hpp"
