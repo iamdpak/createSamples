@@ -19,6 +19,7 @@ modified by: iamdpakgre@gmail.com
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/core.hpp"
 
 
 // for filelisting
@@ -27,6 +28,7 @@ modified by: iamdpakgre@gmail.com
 #include <sys/io.h>
 #elif _WIN32
 #include "windows.h"
+#include <tchar.h>
 #endif
 // for fileoutput
 #include <string>
@@ -54,24 +56,23 @@ int startDraw = 0;
 cv::String window_name="window";
 
 #ifdef _WIN32
-vector<string> get_all_files_names_within_folder(string folder)
+
+
+void get_all_files_names_within_folder(string folder)
 {
-	vector<string> names;
-	char search_path[200];
-	sprintf(search_path, "%s/*.*", folder.c_str());
-	WIN32_FIND_DATA fd;
-	HANDLE hFind = ::FindFirstFile((LPCWSTR)search_path, &fd);
-	if (hFind != INVALID_HANDLE_VALUE) {
-		do {
-			// read all (real) files in current folder
-			// , delete '!' read other 2 default folder . and ..
-			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-				names.push_back((char*)fd.cFileName);
-			}
-		} while (::FindNextFile(hFind, &fd));
-		::FindClose(hFind);
-	}
-	return names;
+	LPCWSTR lpath = _T("C:\\tmp\\");
+	WIN32_FIND_DATA FindFileData;
+	HANDLE hFind;
+
+	hFind = FindFirstFile(lpath, &FindFileData);
+	FindNextFile(hFind, &FindFileData);
+
+
+
+	cout << "\n" << FindFileData.cFileName << endl;
+
+	FindClose(hFind);
+
 }
 #endif
 
@@ -122,6 +123,8 @@ int main(int argc, char** argv)
     string output_file;
 
 
+
+
 #ifdef RELEASE
     if(argc != 3) {
         fprintf(stderr, "%s output_info.txt raw/data/directory/\n", argv[0]);
@@ -130,7 +133,8 @@ int main(int argc, char** argv)
     input_directory = argv[2];
     output_file = argv[1];
 #else
-    input_directory = "Data/";
+    //input_directory = "C:\tmp";
+	input_directory = "..//Data";
     output_file = "positive.txt";
 #endif
 
@@ -244,9 +248,23 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef _WIN32
-vector <string> list = get_all_files_names_within_folder(input_directory);
-for(unsigned int i=0;i<list.size();i++)
-	cout << list[i] << endl;
+	Mat inpImg;
+	vector <cv::String> imgNames;
+
+	glob(input_directory, imgNames); // new function that does the job ;-)
+
+	for (uint i = 0; i < imgNames.size(); ++i)
+	{
+		inpImg = imread(imgNames[i]);
+
+		if (inpImg.empty()){
+			cerr << "Problem loading image!!!" << endl;
+			continue;
+		}
+		imshow("car_samples", inpImg);
+		waitKey(0);
+	}
+
 #endif
     return 0;
 }
