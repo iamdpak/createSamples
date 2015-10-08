@@ -21,13 +21,19 @@ author: achu_wilson@rediffmail.com
 
 // for filelisting
 #include <stdio.h>
+#ifdef __linux__
 #include <sys/io.h>
+#elif _WIN32
+#include "windows.h"
+#endif
 // for fileoutput
 #include <string>
 #include <fstream>
 #include <sstream>
+#ifdef __linux__
 #include <dirent.h>
 #include <sys/types.h>
+#endif
 #include <iostream>
 
 using namespace std;
@@ -43,6 +49,28 @@ int numOfRec=0;
 int startDraw = 0;
 //char* window_name="<SPACE>add <B>save and load next <ESC>exit";
 char* window_name="window";
+
+#ifdef _WIN32
+vector<string> get_all_files_names_within_folder(string folder)
+{
+	vector<string> names;
+	char search_path[200];
+	sprintf(search_path, "%s/*.*", folder.c_str());
+	WIN32_FIND_DATA fd;
+	HANDLE hFind = ::FindFirstFile((LPCWSTR)search_path, &fd);
+	if (hFind != INVALID_HANDLE_VALUE) {
+		do {
+			// read all (real) files in current folder
+			// , delete '!' read other 2 default folder . and ..
+			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+				names.push_back((char*)fd.cFileName);
+			}
+		} while (::FindNextFile(hFind, &fd));
+		::FindClose(hFind);
+	}
+	return names;
+}
+#endif
 
 string IntToString(int num)
 {
@@ -103,6 +131,7 @@ int main(int argc, char** argv)
     output_file = "positive.txt";
 #endif
 
+#ifdef __linux__
     /* Get a file listing of all files with in the input directory */
     DIR    *dir_p = opendir (input_directory.c_str());
     struct dirent *dir_entry_p;
@@ -116,6 +145,7 @@ int main(int argc, char** argv)
 
     //    init highgui
     cvAddSearchPath(input_directory);
+	
     cvNamedWindow(window_name,1);
     cvSetMouseCallback(window_name,on_mouse, NULL);
 
@@ -214,6 +244,12 @@ int main(int argc, char** argv)
     output.close();
     cvDestroyWindow(window_name);
     closedir(dir_p);
+#endif
 
+#ifdef _WIN32
+vector <string> list = get_all_files_names_within_folder(input_directory);
+for(unsigned int i=0;i<list.size();i++)
+	cout << list[i] << endl;
+#endif
     return 0;
 }
