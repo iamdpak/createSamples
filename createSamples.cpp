@@ -15,9 +15,9 @@ while running this code, each image in the given directory will open up. Now mar
 author: achu_wilson@rediffmail.com
 */
 
-#include <opencv/cv.h>
-#include <opencv/cvaux.h>
-#include <opencv/highgui.h>
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/core.hpp"
 
 // for filelisting
 #include <stdio.h>
@@ -37,9 +37,10 @@ author: achu_wilson@rediffmail.com
 #include <iostream>
 
 using namespace std;
+using namespace cv;
 
-IplImage* image=0;
-IplImage* image2=0;
+Mat image;
+Mat image2;
 //int start_roi=0;
 int roi_x0=0;
 int roi_y0=0;
@@ -48,7 +49,7 @@ int roi_y1=0;
 int numOfRec=0;
 int startDraw = 0;
 //char* window_name="<SPACE>add <B>save and load next <ESC>exit";
-char* window_name="window";
+cv::String window_name="window";
 
 #ifdef _WIN32
 vector<string> get_all_files_names_within_folder(string folder)
@@ -102,10 +103,10 @@ void on_mouse(int event,int x,int y,int flag, void *param)
     {
 
         //redraw ROI selection
-        image2=cvCloneImage(image);
-        cvRectangle(image2,cvPoint(roi_x0,roi_y0),cvPoint(x,y),CV_RGB(255,0,255),1);
-        cvShowImage(window_name,image2);
-        cvReleaseImage(&image2);
+    	image.copyTo(image2);
+        rectangle(image2,cvPoint(roi_x0,roi_y0),cvPoint(x,y),CV_RGB(255,0,255),1);
+
+        imshow(window_name,image2);
     }
 
 }
@@ -144,10 +145,10 @@ int main(int argc, char** argv)
     fprintf(stderr, "Object Marker: Input Directory: %s  Output File: %s\n", input_directory.c_str(), output_file.c_str());
 
     //    init highgui
-    cvAddSearchPath(input_directory);
 	
-    cvNamedWindow(window_name,1);
-    cvSetMouseCallback(window_name,on_mouse, NULL);
+    namedWindow(window_name,1);
+    setMouseCallback(window_name,on_mouse, NULL);
+
 
     fprintf(stderr, "Opening directory...");
     //    init output of rectangles to the info file
@@ -157,7 +158,6 @@ int main(int argc, char** argv)
     while((dir_entry_p = readdir(dir_p)) != NULL)
     {
         numOfRec=0;
-
         if(strcmp(dir_entry_p->d_name, ""))
         fprintf(stderr, "Examining file %s\n", dir_entry_p->d_name);
 
@@ -168,35 +168,32 @@ int main(int argc, char** argv)
         //strPrefix+=bmp_file.name;
         fprintf(stderr, "Loading image %s\n", strPrefix.c_str());
 
-
-        if((image=cvLoadImage((input_directory + strPrefix).c_str(),1)) != 0)
+        image=imread((input_directory + strPrefix).c_str(),1);
+        if(!image.empty())
         {
-
             //    work on current image
             do
-
-    {
-                cvShowImage(window_name,image);
+            {
+                imshow(window_name,image);
 
                 // used cvWaitKey returns:
                 //    <B>=66        save added rectangles and show next image
                 //    <ESC>=27        exit program
                 //    <Space>=32        add rectangle to current image
                 //  any other key clears rectangle drawing only
-                iKey=cvWaitKey(0);
+                iKey=waitKey(0);
                 switch(iKey)
                 {
 
                 case 27:
 
-                        cvReleaseImage(&image);
-                        cvDestroyWindow(window_name);
+                        cv::destroyWindow(window_name);
                         return 0;
                 case 32:
 
                         numOfRec++;
-                printf("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1);
-                //printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
+                        printf("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1);
+                        //printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                         // currently two draw directions possible:
                         //        from top left to bottom right or vice versa
                         if(roi_x0<roi_x1 && roi_y0<roi_y1)
@@ -214,7 +211,7 @@ int main(int argc, char** argv)
                             printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                             // append rectangle coord to previous line content
                             strPostfix+=" "+IntToString(roi_x1)+" "+IntToString(roi_y1)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
-        }
+                        }
 
                         break;
                 }
@@ -230,19 +227,17 @@ int main(int argc, char** argv)
                 /* TODO: Store output information. */
                 output << strPrefix << " "<< numOfRec << strPostfix <<"\n";
 
-            cvReleaseImage(&image);
             }
-
-         else
-        {
-            fprintf(stderr, "Failed to load image, %s\n", strPrefix.c_str());
+            else
+            {
+            	fprintf(stderr, "Failed to load image, %s\n", strPrefix.c_str());
+            }
+            }
         }
     }
 
-    }}
-
     output.close();
-    cvDestroyWindow(window_name);
+    destroyWindow(window_name);
     closedir(dir_p);
 #endif
 
