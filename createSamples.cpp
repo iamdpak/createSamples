@@ -16,9 +16,10 @@ author: achu_wilson@rediffmail.com
 modified by: iamdpakgre@gmail.com
 */
 
+
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/core/core.hpp"
+
 
 // for filelisting
 #include <stdio.h>

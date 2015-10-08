@@ -43,7 +43,7 @@ all: createSamples
 createSamples: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross G++ Linker'
-	g++  -o "createSamples" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/usr/local/lib -o "createSamples" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
