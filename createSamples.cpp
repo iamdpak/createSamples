@@ -111,12 +111,12 @@ int main(int argc, char** argv)
     input_directory = argv[2];
     output_file = argv[1];
 #else
-    //input_directory = "C:\tmp";
-	input_directory = "./Data/";
+    //input_directory = "Data/"; //linux
+	input_directory = "..//Data//"; //windows
     output_file = "positive.txt";
 #endif
 
-#ifdef __linux__
+
 
     //getting ready to mark the image
     namedWindow(window_name);
@@ -222,26 +222,7 @@ int main(int argc, char** argv)
     output.close();
     destroyWindow(window_name);
 
-#endif
 
-#ifdef _WIN32
-	Mat inpImg;
-	vector <cv::String> imgNames;
 
-	glob(input_directory, imgNames); // new function that does the job ;-)
-
-	for (uint i = 0; i < imgNames.size(); ++i)
-	{
-		inpImg = imread(imgNames[i]);
-
-		if (inpImg.empty()){
-			cerr << "Problem loading image!!!" << endl;
-			continue;
-		}
-		imshow("car_samples", inpImg);
-		waitKey(0);
-	}
-
-#endif
     return 0;
 }
