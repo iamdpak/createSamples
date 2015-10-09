@@ -21,23 +21,12 @@ modified by: iamdpakgre@gmail.com
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
 
-
-// for filelisting
 #include <stdio.h>
-#ifdef __linux__
-#include <sys/io.h>
-#elif _WIN32
-#include "windows.h"
-#include <tchar.h>
-#endif
+
 // for fileoutput
 #include <string>
 #include <fstream>
 #include <sstream>
-#ifdef __linux__
-#include <dirent.h>
-#include <sys/types.h>
-#endif
 #include <iostream>
 
 using namespace std;
@@ -111,8 +100,8 @@ int main(int argc, char** argv)
     input_directory = argv[2];
     output_file = argv[1];
 #else
-    //input_directory = "Data/"; //linux
-	input_directory = "..//Data//"; //windows
+    input_directory = "Data/"; //linux
+	//input_directory = "..\\Data"; //windows
     output_file = "positive.txt";
 #endif
 
