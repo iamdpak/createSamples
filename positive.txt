@@ -1,7 +1,8 @@
-09DCANGR_TRAFFIC_S_1202767f.jpg 3 0 0 162 307 162 307 46 12 395 240 25 16
-in-4.jpg 1 74 66 31 41
-in-3.jpg 1 18 77 230 52
-in-2.jpeg 1 72 127 101 23
-in-5.jpg 1 97 104 88 28
-4balayya.jpeg 1 96 55 61 34
-mh12de1433.jpeg 1 37 69 193 41
+./Data/09DCANGR_TRAFFIC_S_1202767f.jpg 4 167 304 44 14 211 318 56 -115 267 203 21 17 395 238 25 17
+./Data/4balayya.jpeg 1 100 57 55 29
+./Data/in-1.jpeg 1 53 91 55 17
+./Data/in-2.jpeg 1 73 128 101 25
+./Data/in-3.jpg 1 15 70 235 62
+./Data/in-4.jpg 1 69 66 130 30
+./Data/in-5.jpg 1 199 96 -107 6
+./Data/in-6.jpg 1 288 164 144 48

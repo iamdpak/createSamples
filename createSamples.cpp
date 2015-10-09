@@ -19,7 +19,7 @@ modified by: iamdpakgre@gmail.com
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/core/core.hpp"
+#include "opencv2/imgcodecs.hpp"
 
 
 // for filelisting
@@ -43,8 +43,6 @@ modified by: iamdpakgre@gmail.com
 using namespace std;
 using namespace cv;
 
-Mat image;
-Mat image2;
 //int start_roi=0;
 int roi_x0=0;
 int roi_y0=0;
@@ -53,28 +51,7 @@ int roi_y1=0;
 int numOfRec=0;
 int startDraw = 0;
 //char* window_name="<SPACE>add <B>save and load next <ESC>exit";
-cv::String window_name="window";
-
-#ifdef _WIN32
-
-
-void get_all_files_names_within_folder(string folder)
-{
-	LPCWSTR lpath = _T("C:\\tmp\\");
-	WIN32_FIND_DATA FindFileData;
-	HANDLE hFind;
-
-	hFind = FindFirstFile(lpath, &FindFileData);
-	FindNextFile(hFind, &FindFileData);
-
-
-
-	cout << "\n" << FindFileData.cFileName << endl;
-
-	FindClose(hFind);
-
-}
-#endif
+cv::String window_name="car_samples";
 
 string IntToString(int num)
 {
@@ -89,6 +66,8 @@ string IntToString(int num)
 
 void on_mouse(int event,int x,int y,int flag, void *param)
 {
+	Mat image, image_copy;
+	image = * (Mat*) param;
     if(event==CV_EVENT_LBUTTONDOWN)
     {
         if(!startDraw)
@@ -104,12 +83,10 @@ void on_mouse(int event,int x,int y,int flag, void *param)
     }
     if(event==CV_EVENT_MOUSEMOVE && startDraw)
     {
-
+    	image.copyTo(image_copy);
         //redraw ROI selection
-    	image.copyTo(image2);
-        rectangle(image2,cvPoint(roi_x0,roi_y0),cvPoint(x,y),CV_RGB(255,0,255),1);
-
-        imshow(window_name,image2);
+        rectangle(image_copy,cvPoint(roi_x0,roi_y0),cvPoint(x,y),CV_RGB(255,0,255),1);
+        imshow(window_name,image_copy);
     }
 
 }
@@ -121,9 +98,7 @@ int main(int argc, char** argv)
     string strPostfix;
     string input_directory;
     string output_file;
-
-
-
+	Mat inpImg;
 
 #ifdef RELEASE
     if(argc != 3) {
@@ -134,53 +109,47 @@ int main(int argc, char** argv)
     output_file = argv[1];
 #else
     //input_directory = "C:\tmp";
-	input_directory = "..//Data";
+	input_directory = "./Data/";
     output_file = "positive.txt";
 #endif
 
 #ifdef __linux__
-    /* Get a file listing of all files with in the input directory */
-    DIR    *dir_p = opendir (input_directory.c_str());
-    struct dirent *dir_entry_p;
 
-    if(dir_p == NULL) {
-        fprintf(stderr, "Failed to open directory %s\n", input_directory.c_str());
+    //getting ready to mark the image
+    namedWindow(window_name);
+    setMouseCallback(window_name,on_mouse, &inpImg);
+
+    /* Get a file listing of all files with in the input directory */
+	vector <cv::String> imgNames;
+	//new opencv function to get the list of files present in a folder
+	glob(input_directory, imgNames,false);
+
+
+    if(imgNames.size() == 0) {
+        cerr << format("No files in the directory or failed to open directory %s",input_directory.c_str()) << endl;
         return -1;
     }
 
-    fprintf(stderr, "Object Marker: Input Directory: %s  Output File: %s\n", input_directory.c_str(), output_file.c_str());
-
-    //    init highgui
-	
-    namedWindow(window_name,1);
-    setMouseCallback(window_name,on_mouse, NULL);
-
-
-    fprintf(stderr, "Opening directory...");
+    cout << "creating the output file..." << endl;
     //    init output of rectangles to the info file
     ofstream output(output_file.c_str());
-    fprintf(stderr, "done.\n");
+    cout << "done" << endl;
 
-    while((dir_entry_p = readdir(dir_p)) != NULL)
-    {
-        numOfRec=0;
-        if(strcmp(dir_entry_p->d_name, ""))
-        fprintf(stderr, "Examining file %s\n", dir_entry_p->d_name);
+	for (uint i = 0; i < imgNames.size(); ++i)
+	{
+		inpImg = imread(imgNames[i]);
 
-        /* TODO: Assign postfix/prefix info */
-        strPostfix="";
-        //strPrefix=input_directory;
-        strPrefix=dir_entry_p->d_name;
-        //strPrefix+=bmp_file.name;
-        fprintf(stderr, "Loading image %s\n", strPrefix.c_str());
+		// Assign postfix/prefix info
+		strPrefix = imgNames[i];
+		strPostfix="";
+		numOfRec = 0;
 
-        image=imread((input_directory + strPrefix).c_str(),1);
-        if(!image.empty())
-        {
+		if (!inpImg.empty())
+		{
             //    work on current image
             do
             {
-                imshow(window_name,image);
+                imshow(window_name,inpImg);
 
                 // used cvWaitKey returns:
                 //    <B>=66        save added rectangles and show next image
@@ -194,18 +163,18 @@ int main(int argc, char** argv)
                 case 27:
 
                         cv::destroyWindow(window_name);
+                        output.close();
                         return 0;
                 case 32:
 
                         numOfRec++;
-                        printf("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1);
-                        //printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
+                        cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1) << endl;
+                        //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1) << endl;
                         // currently two draw directions possible:
                         //        from top left to bottom right or vice versa
                         if(roi_x0<roi_x1 && roi_y0<roi_y1)
                         {
-
-                            printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0);
+                            cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
                             // append rectangle coord to previous line content
                             strPostfix+=" "+IntToString(roi_x0)+" "+IntToString(roi_y0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
 
@@ -213,7 +182,6 @@ int main(int argc, char** argv)
                         else
                                                     //(roi_x0>roi_x1 && roi_y0>roi_y1)
                         {
-                            printf(" hello line no 154\n");
                             printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                             // append rectangle coord to previous line content
                             strPostfix+=" "+IntToString(roi_x1)+" "+IntToString(roi_y1)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
@@ -224,27 +192,34 @@ int main(int argc, char** argv)
             }
             while(iKey!=66);
 
-            {
+
             // save to info file as later used for HaarTraining:
             //    <rel_path>\bmp_file.name numOfRec x0 y0 width0 height0 x1 y1 width1 height1...
             if(numOfRec>0 && iKey==66)
             {
                 //append line
                 /* TODO: Store output information. */
+            	cout << strPrefix.c_str() << " "<< numOfRec << strPostfix.c_str() <<"\n";
                 output << strPrefix << " "<< numOfRec << strPostfix <<"\n";
 
             }
             else
             {
-            	fprintf(stderr, "Failed to load image, %s\n", strPrefix.c_str());
+            	cerr << format("Failed to load image, %s\n", strPrefix.c_str()) << endl;
             }
-            }
-        }
-    }
+
+		}
+		else
+		{
+			cerr << format("skipping the file, %s", strPrefix.c_str()) << endl;
+			continue;
+		}
+	}
+
 
     output.close();
     destroyWindow(window_name);
-    closedir(dir_p);
+
 #endif
 
 #ifdef _WIN32
