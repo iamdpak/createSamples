@@ -202,7 +202,6 @@ int main(int argc, char** argv)
             {
                 //append line
                 /* TODO: Store output information. */
-            	cout << strPrefix.c_str() << " "<< numOfRec << strPostfix.c_str() <<"\n";
                 output << strPrefix << " "<< numOfRec << strPostfix <<"\n";
 
             }
