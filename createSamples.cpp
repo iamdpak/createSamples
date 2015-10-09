@@ -75,12 +75,15 @@ void on_mouse(int event,int x,int y,int flag, void *param)
             roi_x0=x;
             roi_y0=y;
             startDraw = 1;
-        } else {
-            roi_x1=x;
-            roi_y1=y;
-            startDraw = 0;
         }
     }
+    if(event == CV_EVENT_LBUTTONUP)
+    {
+    	roi_x1=x;
+    	roi_y1=y;
+        startDraw = 0;
+    }
+
     if(event==CV_EVENT_MOUSEMOVE && startDraw)
     {
     	image.copyTo(image_copy);
