@@ -19,7 +19,6 @@ modified by: iamdpakgre@gmail.com
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/videoio.hpp"
 #include "opencv2/imgcodecs.hpp"
 
 #include <stdio.h>
@@ -33,7 +32,7 @@ modified by: iamdpakgre@gmail.com
 using namespace std;
 using namespace cv;
 
-//#define IMAGE
+#define IMAGE
 
 //int start_roi=0;
 int roi_x0=0;
@@ -107,8 +106,8 @@ int main(int argc, char** argv)
     input_directory = argv[2];
     output_file = argv[1];
 #else
-    input_directory = "Data/"; //linux
-	//input_directory = "..\\Data"; //windows
+    //input_directory = "Data/"; //linux
+	input_directory = "..\\Data"; //windows
     output_file = "positive.txt";
 #endif
     //getting ready to mark the image
@@ -134,9 +133,9 @@ int main(int argc, char** argv)
 	{
 		inpImg = imread(imgNames[i]);
 
-		// Assign postfix/prefix info
+		// Assign prefix info
 		strPrefix = imgNames[i];
-		strPostfix="";
+		
 		numOfRec = 0;
 
 		if (!inpImg.empty())
@@ -144,6 +143,8 @@ int main(int argc, char** argv)
             //    work on current image
             do
             {
+				//initialize postfix info to provide only one entry per line
+				strPostfix = "";
                 imshow(window_name,inpImg);
 
                 // used cvWaitKey returns:
@@ -154,51 +155,60 @@ int main(int argc, char** argv)
                 iKey=waitKey(0);
                 switch(iKey)
                 {
-
                 case 27:
-
                         cv::destroyWindow(window_name);
                         output.close();
                         return 0;
                 case 32:
 
                         numOfRec++;
-                        numOfRec_global++;
+                        
                         cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1) << endl;
                         //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1) << endl;
                         // currently two draw directions possible:
                         //        from top left to bottom right or vice versa
                         if(roi_x0<roi_x1 && roi_y0<roi_y1)
                         {
+							numOfRec_global++;
                             cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
                             // append rectangle coord to previous line content
                             strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
                             Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
                             outImg = Mat(inpImg,ROI);
+							//writing the cropped image to a file
+#ifdef __linux__
+							outFileName = ("posSamples/India-" + IntToString(numOfRec_global) + ".jpg");
+#elif _WIN32
+							outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
+#endif
+							cv::imwrite(outFileName, outImg);
+							output << outFileName << " " << "1" << strPostfix << "\n";
                         }
-                        else
+						else if (roi_x0>roi_x1 && roi_y0>roi_y1)
                                                     //(roi_x0>roi_x1 && roi_y0>roi_y1)
                         {
+							numOfRec_global++;
                             printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                             // append rectangle coord to previous line content
                             strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
                             Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
                             outImg = Mat(inpImg,ROI);
-                        }
-                        //writing the cropped image to a file
+							//writing the cropped image to a file
 #ifdef __linux__
-                        outFileName = ("posSamples/India-"+ IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("posSamples/India-"+ IntToString(numOfRec_global) + ".jpg");
 #elif _WIN32
-                        outFileName = ("..\\posSamples\\India-"+ IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
 #endif
-                        cv::imwrite(outFileName,outImg);
-                        output << outFileName << " "<< "1" << strPostfix <<"\n";
+							cv::imwrite(outFileName, outImg);
+							output << outFileName << " " << "1" << strPostfix << "\n";
+                        }
+
                         break;
 
                 }
+				roi_x0 = roi_x1 = roi_y0 = roi_y1 = 0;
             }
             while(iKey!=66);
-
 
 		}
 		else
@@ -207,13 +217,8 @@ int main(int argc, char** argv)
 			continue;
 		}
 	}
-
-
     output.close();
     destroyWindow(window_name);
-
-
-
     return 0;
 }
 #else
@@ -236,8 +241,8 @@ int main(int argc, char** argv)
     input_directory = argv[2];
     output_file = argv[1];
 #else
-    input_video = "Data/inpVideo.mp4"; //linux
-	//input_directory = "..\\Data\\inpVideo.mp4"; //windows
+    //input_video = "Data/inpVideo.mp4"; //linux
+	input_video = "..\\Data\\in_5.mp4"; //windows
     output_file = "positive.txt";
 #endif
     //getting ready to mark the image
@@ -281,40 +286,51 @@ int main(int argc, char** argv)
                    return 0;
             case 32:
                    numOfRec++;
-                   numOfRec_global++;
+                   
                    cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1) << endl;
                    //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1) << endl;
                    // currently two draw directions possible:
                    //        from top left to bottom right or vice versa
                    if(roi_x0<roi_x1 && roi_y0<roi_y1)
                    {
+					   numOfRec_global++;
                        cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
                        // append rectangle coord to previous line content
                        strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
                        Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
                        outImg = Mat(inpImg,ROI);
+					   //writing the cropped image to a file
+#ifdef __linux__
+					   outFileName = ("posSamples/India-" + IntToString(numOfRec_global) + ".jpg");
+#elif _WIN32
+					   outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
+#endif
+					   cv::imwrite(outFileName, outImg);
+					   output << outFileName << " " << numOfRec << strPostfix << "\n";
+
                    }
-                   else
-                  //(roi_x0>roi_x1 && roi_y0>roi_y1)
+                   else if (roi_x0>roi_x1 && roi_y0>roi_y1)
                    {
+					   numOfRec_global++;
                 	   printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                        // append rectangle coord to previous line content
                        strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
                        Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
                        outImg = Mat(inpImg,ROI);
-                   }
-                        //writing the cropped image to a file
+					   //writing the cropped image to a file
 #ifdef __linux__
-                       outFileName = ("posSamples/India-"+ IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("posSamples/India-" + IntToString(numOfRec_global) + ".jpg");
 #elif _WIN32
-                       outFileName = ("..\\posSamples\\India-"+ IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("..\\posSamples\\India-"+ IntToString(numOfRec_global) + ".jpg");
 #endif
-                       cv::imwrite(outFileName,outImg);
-                       output << outFileName << " "<< numOfRec << strPostfix <<"\n";
-                       break;
-        }
-	}
+					   cv::imwrite(outFileName, outImg);
+					   output << outFileName << " " << numOfRec << strPostfix << "\n";
 
+                   }
+                   break;
+        }
+		roi_x0 = roi_x1 = roi_y0 = roi_y1 = 0;
+	}
 
     output.close();
     destroyWindow(window_name);
