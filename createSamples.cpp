@@ -19,6 +19,7 @@ modified by: iamdpakgre@gmail.com
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/videoio.hpp"
 #include "opencv2/imgcodecs.hpp"
 
 #include <stdio.h>
@@ -31,6 +32,8 @@ modified by: iamdpakgre@gmail.com
 
 using namespace std;
 using namespace cv;
+
+//#define IMAGE
 
 //int start_roi=0;
 int roi_x0=0;
@@ -84,6 +87,7 @@ void on_mouse(int event,int x,int y,int flag, void *param)
 
 }
 
+#ifdef IMAGE
 int main(int argc, char** argv)
 {
     char iKey=0;
@@ -107,9 +111,6 @@ int main(int argc, char** argv)
 	//input_directory = "..\\Data"; //windows
     output_file = "positive.txt";
 #endif
-
-
-
     //getting ready to mark the image
     namedWindow(window_name);
     setMouseCallback(window_name,on_mouse, &inpImg);
@@ -118,7 +119,6 @@ int main(int argc, char** argv)
 	vector <cv::String> imgNames;
 	//new opencv function to get the list of files present in a folder
 	glob(input_directory, imgNames,false);
-
 
     if(imgNames.size() == 0) {
         cerr << format("No files in the directory or failed to open directory %s",input_directory.c_str()) << endl;
@@ -172,7 +172,7 @@ int main(int argc, char** argv)
                         {
                             cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
                             // append rectangle coord to previous line content
-                            strPostfix+=" "+IntToString(roi_x0)+" "+IntToString(roi_y0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
+                            strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
                             Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
                             outImg = Mat(inpImg,ROI);
                         }
@@ -181,7 +181,7 @@ int main(int argc, char** argv)
                         {
                             printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                             // append rectangle coord to previous line content
-                            strPostfix+=" "+IntToString(roi_x1)+" "+IntToString(roi_y1)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
+                            strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
                             Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
                             outImg = Mat(inpImg,ROI);
                         }
@@ -192,27 +192,13 @@ int main(int argc, char** argv)
                         outFileName = ("..\\posSamples\\India-"+ IntToString(numOfRec_global) + ".jpg");
 #endif
                         cv::imwrite(outFileName,outImg);
+                        output << outFileName << " "<< "1" << strPostfix <<"\n";
                         break;
-
 
                 }
             }
             while(iKey!=66);
 
-
-            // save to info file as later used for HaarTraining:
-            //    <rel_path>\bmp_file.name numOfRec x0 y0 width0 height0 x1 y1 width1 height1...
-            if(numOfRec>0 && iKey==66)
-            {
-                //append line
-                /* TODO: Store output information. */
-                output << strPrefix << " "<< numOfRec << strPostfix <<"\n";
-
-            }
-            else
-            {
-            	cerr << format("Failed to load image, %s\n", strPrefix.c_str()) << endl;
-            }
 
 		}
 		else
@@ -230,3 +216,109 @@ int main(int argc, char** argv)
 
     return 0;
 }
+#else
+int main(int argc, char** argv)
+{
+    char iKey=0;
+    string strPrefix;
+    string strPostfix;
+    string input_video;
+    string output_file;
+	Mat inpImg;
+	Mat outImg;
+	string outFileName;
+
+#ifdef RELEASE
+    if(argc != 3) {
+        fprintf(stderr, "%s output_info.txt raw/data/directory/\n", argv[0]);
+        return -1;
+    }
+    input_directory = argv[2];
+    output_file = argv[1];
+#else
+    input_video = "Data/inpVideo.mp4"; //linux
+	//input_directory = "..\\Data\\inpVideo.mp4"; //windows
+    output_file = "positive.txt";
+#endif
+    //getting ready to mark the image
+    namedWindow(window_name);
+    setMouseCallback(window_name,on_mouse, &inpImg);
+
+    cout << "creating the output file..." << endl;
+    //    init output of rectangles to the info file
+    ofstream output(output_file.c_str());
+    cout << "done" << endl;
+
+    cv::VideoCapture capture;
+    capture.open(input_video);
+	if (!capture.isOpened())
+		return -1;
+
+	while(1)
+	{
+		capture >> inpImg;
+		if (inpImg.empty())
+			break;
+
+		// Assign postfix/prefix info
+		outFileName = "India-"+ IntToString(numOfRec_global) + ".jpg";
+		strPostfix="";
+		numOfRec = 0;
+
+		imshow(window_name,inpImg);
+
+        // used cvWaitKey returns:
+        //    <B>=66        save added rectangles and show next image
+        //    <ESC>=27        exit program
+        //    <Space>=32        add rectangle to current image
+        //  any other key clears rectangle drawing only
+        iKey=waitKey(0);
+        switch(iKey)
+        {
+        	case 27:
+                   cv::destroyWindow(window_name);
+                   output.close();
+                   return 0;
+            case 32:
+                   numOfRec++;
+                   numOfRec_global++;
+                   cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1) << endl;
+                   //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1) << endl;
+                   // currently two draw directions possible:
+                   //        from top left to bottom right or vice versa
+                   if(roi_x0<roi_x1 && roi_y0<roi_y1)
+                   {
+                       cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
+                       // append rectangle coord to previous line content
+                       strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
+                       Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
+                       outImg = Mat(inpImg,ROI);
+                   }
+                   else
+                  //(roi_x0>roi_x1 && roi_y0>roi_y1)
+                   {
+                	   printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
+                       // append rectangle coord to previous line content
+                       strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
+                       Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
+                       outImg = Mat(inpImg,ROI);
+                   }
+                        //writing the cropped image to a file
+#ifdef __linux__
+                       outFileName = ("posSamples/India-"+ IntToString(numOfRec_global) + ".jpg");
+#elif _WIN32
+                       outFileName = ("..\\posSamples\\India-"+ IntToString(numOfRec_global) + ".jpg");
+#endif
+                       cv::imwrite(outFileName,outImg);
+                       output << outFileName << " "<< numOfRec << strPostfix <<"\n";
+                       break;
+        }
+	}
+
+
+    output.close();
+    destroyWindow(window_name);
+
+    return 0;
+}
+#endif
