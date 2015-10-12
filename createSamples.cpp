@@ -38,6 +38,7 @@ int roi_y0=0;
 int roi_x1=0;
 int roi_y1=0;
 int numOfRec=0;
+int numOfRec_global=0; //initialize this with the count
 int startDraw = 0;
 //char* window_name="<SPACE>add <B>save and load next <ESC>exit";
 cv::String window_name="car_samples";
@@ -91,6 +92,8 @@ int main(int argc, char** argv)
     string input_directory;
     string output_file;
 	Mat inpImg;
+	Mat outImg;
+	string outFileName;
 
 #ifdef RELEASE
     if(argc != 3) {
@@ -160,6 +163,7 @@ int main(int argc, char** argv)
                 case 32:
 
                         numOfRec++;
+                        numOfRec_global++;
                         cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1) << endl;
                         //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1) << endl;
                         // currently two draw directions possible:
@@ -169,7 +173,8 @@ int main(int argc, char** argv)
                             cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
                             // append rectangle coord to previous line content
                             strPostfix+=" "+IntToString(roi_x0)+" "+IntToString(roi_y0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
-
+                            Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
+                            outImg = Mat(inpImg,ROI);
                         }
                         else
                                                     //(roi_x0>roi_x1 && roi_y0>roi_y1)
@@ -177,9 +182,19 @@ int main(int argc, char** argv)
                             printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                             // append rectangle coord to previous line content
                             strPostfix+=" "+IntToString(roi_x1)+" "+IntToString(roi_y1)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
+                            Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
+                            outImg = Mat(inpImg,ROI);
                         }
-
+                        //writing the cropped image to a file
+#ifdef __linux__
+                        outFileName = ("posSamples/India-"+ IntToString(numOfRec_global) + ".jpg");
+#elif _WIN32
+                        outFileName = ("..\\posSamples\\India-"+ IntToString(numOfRec_global) + ".jpg");
+#endif
+                        cv::imwrite(outFileName,outImg);
                         break;
+
+
                 }
             }
             while(iKey!=66);
