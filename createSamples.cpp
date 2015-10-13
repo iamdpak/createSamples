@@ -241,8 +241,8 @@ int main(int argc, char** argv)
     input_directory = argv[2];
     output_file = argv[1];
 #else
-    //input_video = "Data/inpVideo.mp4"; //linux
-	input_video = "..\\Data\\in_5.mp4"; //windows
+    input_video = "/home/deepak/Videos/Data/in_3.mp4"; //linux
+	//input_video = "..\\Data\\in_5.mp4"; //windows
     output_file = "positive.txt";
 #endif
     //getting ready to mark the image
