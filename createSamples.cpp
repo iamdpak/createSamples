@@ -32,7 +32,7 @@ modified by: iamdpakgre@gmail.com
 using namespace std;
 using namespace cv;
 
-#define IMAGE
+//#define IMAGE
 
 //int start_roi=0;
 int roi_x0=0;

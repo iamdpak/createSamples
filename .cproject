@@ -45,6 +45,7 @@
 									<listOptionValue builtIn="false" value="opencv_features2d"/>
 									<listOptionValue builtIn="false" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" value="opencv_video"/>
+									<listOptionValue builtIn="false" value="opencv_videoio"/>
 									<listOptionValue builtIn="false" value="opencv_photo"/>
 									<listOptionValue builtIn="false" value="opencv_ml"/>
 									<listOptionValue builtIn="false" value="opencv_imgproc"/>
