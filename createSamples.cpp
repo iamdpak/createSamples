@@ -19,7 +19,8 @@ modified by: iamdpakgre@gmail.com
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-
+#include "opencv2/imgcodecs.hpp"
+#include <cmath>
 
 #include <stdio.h>
 
@@ -32,7 +33,7 @@ modified by: iamdpakgre@gmail.com
 using namespace std;
 using namespace cv;
 
-//#define IMAGE
+#define IMAGE
 
 //int start_roi=0;
 int roi_x0=0;
@@ -40,7 +41,7 @@ int roi_y0=0;
 int roi_x1=0;
 int roi_y1=0;
 int numOfRec=0;
-int numOfRec_global=0; //initialize this with the count
+int numOfRec_global=197; //initialize this with the count
 int startDraw = 0;
 //char* window_name="<SPACE>add <B>save and load next <ESC>exit";
 cv::String window_name="car_samples";
@@ -107,7 +108,8 @@ int main(int argc, char** argv)
     output_file = argv[1];
 #else
     //input_directory = "Data/"; //linux
-	input_directory = "..\\Data"; //windows
+	input_directory = "..\\Data\\cars"; //windows
+	//input_directory = "C:\\Users\\iamdp_000\\Documents\\Visual Studio 2013\\Projects\\webSVNProjects\\headcount\\trunk\\headCount\\Data\\cars";
     output_file = "positive.txt";
 #endif
     //getting ready to mark the image
@@ -126,7 +128,7 @@ int main(int argc, char** argv)
 
     cout << "creating the output file..." << endl;
     //    init output of rectangles to the info file
-    ofstream output(output_file.c_str());
+    ofstream output(output_file.c_str(),std::ios::app);
     cout << "done" << endl;
 
 	for (uint i = 0; i < imgNames.size(); ++i)
@@ -172,7 +174,6 @@ int main(int argc, char** argv)
 							numOfRec_global++;
                             cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
                             // append rectangle coord to previous line content
-                            strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
                             Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
                             outImg = Mat(inpImg,ROI);
 							//writing the cropped image to a file
@@ -181,7 +182,12 @@ int main(int argc, char** argv)
 #elif _WIN32
 							outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
 #endif
+							float height = 100;
+							float ratio = outImg.rows / height;
+							float width = outImg.cols / ratio;
+							resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
 							cv::imwrite(outFileName, outImg);
+							strPostfix += " " + IntToString(0) + " " + IntToString(0) + " " + IntToString((int)ceil(width)) + " " + IntToString((int)ceil(height));
 							output << outFileName << " " << "1" << strPostfix << "\n";
                         }
 						else if (roi_x0>roi_x1 && roi_y0>roi_y1)
@@ -190,7 +196,7 @@ int main(int argc, char** argv)
 							numOfRec_global++;
                             printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                             // append rectangle coord to previous line content
-                            strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
+
                             Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
                             outImg = Mat(inpImg,ROI);
 							//writing the cropped image to a file
@@ -199,7 +205,13 @@ int main(int argc, char** argv)
 #elif _WIN32
 							outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
 #endif
+							//create a sample of height 100 X something  -- this number changes with the type of object to be trained
+							float height = 100; 
+							float ratio = outImg.rows / height;
+							float width = outImg.cols / ratio;
+							resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
 							cv::imwrite(outFileName, outImg);
+							strPostfix += " " + IntToString(0) + " " + IntToString(0) + " " + IntToString((int)ceil(width)) + " " + IntToString((int)ceil(height));
 							output << outFileName << " " << "1" << strPostfix << "\n";
                         }
 
@@ -241,8 +253,8 @@ int main(int argc, char** argv)
     input_directory = argv[2];
     output_file = argv[1];
 #else
-    input_video = "/home/deepak/Videos/Data/in_3.mp4"; //linux
-	//input_video = "..\\Data\\in_5.mp4"; //windows
+    //input_video = "Data/inpVideo.mp4"; //linux
+	input_video = "..\\Data\\in_5.mp4"; //windows
     output_file = "positive.txt";
 #endif
     //getting ready to mark the image
@@ -296,7 +308,7 @@ int main(int argc, char** argv)
 					   numOfRec_global++;
                        cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
                        // append rectangle coord to previous line content
-                       strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
+                       //strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
                        Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
                        outImg = Mat(inpImg,ROI);
 					   //writing the cropped image to a file
@@ -305,8 +317,13 @@ int main(int argc, char** argv)
 #elif _WIN32
 					   outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
 #endif
+					   float height = 100;
+					   float ratio = outImg.rows / height;
+					   float width = outImg.cols / ratio;
+					   resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
 					   cv::imwrite(outFileName, outImg);
-					   output << outFileName << " " << numOfRec << strPostfix << "\n";
+					   strPostfix += " " + IntToString(0) + " " + IntToString(0) + " " + IntToString((int)ceil(width)) + " " + IntToString((int)ceil(height));
+					   output << outFileName << " " << "1" << strPostfix << "\n";
 
                    }
                    else if (roi_x0>roi_x1 && roi_y0>roi_y1)
@@ -314,7 +331,7 @@ int main(int argc, char** argv)
 					   numOfRec_global++;
                 	   printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
                        // append rectangle coord to previous line content
-                       strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
+                      // strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
                        Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
                        outImg = Mat(inpImg,ROI);
 					   //writing the cropped image to a file
@@ -323,8 +340,13 @@ int main(int argc, char** argv)
 #elif _WIN32
 					   outFileName = ("..\\posSamples\\India-"+ IntToString(numOfRec_global) + ".jpg");
 #endif
+					   float height = 100;
+					   float ratio = outImg.rows / height;
+					   float width = outImg.cols / ratio;
+					   resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
 					   cv::imwrite(outFileName, outImg);
-					   output << outFileName << " " << numOfRec << strPostfix << "\n";
+					   strPostfix += " " + IntToString(0) + " " + IntToString(0) + " " + IntToString((int)ceil(width)) + " " + IntToString((int)ceil(height));
+					   output << outFileName << " " << "1" << strPostfix << "\n";
 
                    }
                    break;
