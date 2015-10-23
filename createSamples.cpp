@@ -33,6 +33,9 @@ modified by: iamdpakgre@gmail.com
 using namespace std;
 using namespace cv;
 
+#define ASPECT_RATIO_X 1
+#define ASPECT_RATIO_Y 0.7
+
 #define IMAGE
 
 //int start_roi=0;
@@ -41,7 +44,7 @@ int roi_y0=0;
 int roi_x1=0;
 int roi_y1=0;
 int numOfRec=0;
-int numOfRec_global=197; //initialize this with the count
+int numOfRec_global=0; //initialize this with the count
 int startDraw = 0;
 //char* window_name="<SPACE>add <B>save and load next <ESC>exit";
 cv::String window_name="car_samples";
@@ -72,16 +75,25 @@ void on_mouse(int event,int x,int y,int flag, void *param)
     }
     if(event == CV_EVENT_LBUTTONUP)
     {
-    	roi_x1=x;
-    	roi_y1=y;
         startDraw = 0;
     }
 
     if(event==CV_EVENT_MOUSEMOVE && startDraw)
     {
+		if (abs(roi_x0 - x) > abs(roi_y0 - y))
+		{
+			roi_x1 = roi_x0 + (x - roi_x0) * ASPECT_RATIO_X;
+			roi_y1 = roi_y0 + (x - roi_x0) * ASPECT_RATIO_Y;
+		}
+		else
+		{
+			roi_x1 = roi_x0 + (y - roi_y0) * ASPECT_RATIO_X;
+			roi_y1 = roi_y0 + (y - roi_y0) * ASPECT_RATIO_Y;
+		}
+
     	image.copyTo(image_copy);
         //redraw ROI selection
-        rectangle(image_copy,cvPoint(roi_x0,roi_y0),cvPoint(x,y),CV_RGB(255,0,255),1);
+		rectangle(image_copy, cvPoint(roi_x0, roi_y0), cvPoint(roi_x1, roi_y1), CV_RGB(255, 0, 255), 1);	
         imshow(window_name,image_copy);
     }
 
@@ -178,11 +190,11 @@ int main(int argc, char** argv)
                             outImg = Mat(inpImg,ROI);
 							//writing the cropped image to a file
 #ifdef __linux__
-							outFileName = ("posSamples/India-" + IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("posSamples/Sample-" + IntToString(numOfRec_global) + ".jpg");
 #elif _WIN32
-							outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_global) + ".jpg");
 #endif
-							float height = 100;
+							float height = 50;
 							float ratio = outImg.rows / height;
 							float width = outImg.cols / ratio;
 							resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
@@ -201,12 +213,12 @@ int main(int argc, char** argv)
                             outImg = Mat(inpImg,ROI);
 							//writing the cropped image to a file
 #ifdef __linux__
-							outFileName = ("posSamples/India-"+ IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("posSamples/Sample-"+ IntToString(numOfRec_global) + ".jpg");
 #elif _WIN32
-							outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_global) + ".jpg");
 #endif
 							//create a sample of height 100 X something  -- this number changes with the type of object to be trained
-							float height = 100; 
+							float height = 50; 
 							float ratio = outImg.rows / height;
 							float width = outImg.cols / ratio;
 							resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
@@ -278,7 +290,7 @@ int main(int argc, char** argv)
 			break;
 
 		// Assign postfix/prefix info
-		outFileName = "India-"+ IntToString(numOfRec_global) + ".jpg";
+		outFileName = "Sample-"+ IntToString(numOfRec_global) + ".jpg";
 		strPostfix="";
 		numOfRec = 0;
 
@@ -313,11 +325,11 @@ int main(int argc, char** argv)
                        outImg = Mat(inpImg,ROI);
 					   //writing the cropped image to a file
 #ifdef __linux__
-					   outFileName = ("posSamples/India-" + IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("posSamples/Sample-" + IntToString(numOfRec_global) + ".jpg");
 #elif _WIN32
-					   outFileName = ("..\\posSamples\\India-" + IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_global) + ".jpg");
 #endif
-					   float height = 100;
+					   float height = 50;
 					   float ratio = outImg.rows / height;
 					   float width = outImg.cols / ratio;
 					   resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
@@ -336,11 +348,11 @@ int main(int argc, char** argv)
                        outImg = Mat(inpImg,ROI);
 					   //writing the cropped image to a file
 #ifdef __linux__
-					   outFileName = ("posSamples/India-" + IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("posSamples/Sample-" + IntToString(numOfRec_global) + ".jpg");
 #elif _WIN32
-					   outFileName = ("..\\posSamples\\India-"+ IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("..\\posSamples\\Sample-"+ IntToString(numOfRec_global) + ".jpg");
 #endif
-					   float height = 100;
+					   float height = 50;
 					   float ratio = outImg.rows / height;
 					   float width = outImg.cols / ratio;
 					   resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
