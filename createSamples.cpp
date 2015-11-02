@@ -34,18 +34,26 @@ using namespace std;
 using namespace cv;
 
 #define ASPECT_RATIO_X 1
-#define ASPECT_RATIO_Y 0.7
+#define ASPECT_RATIO_Y 1
 
-#define IMAGE
+//#define IMAGE
 
 //int start_roi=0;
-int roi_x0=0;
-int roi_y0=0;
-int roi_x1=0;
-int roi_y1=0;
+int pos_roi_x0=0;
+int pos_roi_y0=0;
+int pos_roi_x1=0;
+int pos_roi_y1=0;
+int neg_roi_x0 = 0;
+int neg_roi_y0 = 0;
+int neg_roi_x1 = 0;
+int neg_roi_y1 = 0;
+
 int numOfRec=0;
-int numOfRec_global=0; //initialize this with the count
-int startDraw = 0;
+int numOfRec_pos=0; //initialize this with the count
+int numOfRec_neg = 0;
+int pos_startDraw = 0;
+bool pos_chosen = false;
+int neg_startDraw = 0;
 //char* window_name="<SPACE>add <B>save and load next <ESC>exit";
 cv::String window_name="car_samples";
 
@@ -64,39 +72,67 @@ void on_mouse(int event,int x,int y,int flag, void *param)
 {
 	Mat image, image_copy;
 	image = * (Mat*) param;
+
+	//drawing positive ROI
     if(event==CV_EVENT_LBUTTONDOWN)
     {
-        if(!startDraw)
+        if(!pos_startDraw)
         {
-            roi_x0=x;
-            roi_y0=y;
-            startDraw = 1;
+            pos_roi_x0=x;
+            pos_roi_y0=y;
+            pos_startDraw = 1;
         }
     }
     if(event == CV_EVENT_LBUTTONUP)
     {
-        startDraw = 0;
+        pos_startDraw = 0;
+		pos_chosen = true;
     }
 
-    if(event==CV_EVENT_MOUSEMOVE && startDraw)
+    if(event==CV_EVENT_MOUSEMOVE && pos_startDraw)
     {
-		if (abs(roi_x0 - x) > abs(roi_y0 - y))
+		if (abs(pos_roi_x0 - x) > abs(pos_roi_y0 - y))
 		{
-			roi_x1 = roi_x0 + (x - roi_x0) * ASPECT_RATIO_X;
-			roi_y1 = roi_y0 + (x - roi_x0) * ASPECT_RATIO_Y;
+			pos_roi_x1 = pos_roi_x0 + (x - pos_roi_x0) * ASPECT_RATIO_X;
+			pos_roi_y1 = pos_roi_y0 + (x - pos_roi_x0) * ASPECT_RATIO_Y;
 		}
 		else
 		{
-			roi_x1 = roi_x0 + (y - roi_y0) * ASPECT_RATIO_X;
-			roi_y1 = roi_y0 + (y - roi_y0) * ASPECT_RATIO_Y;
+			pos_roi_x1 = pos_roi_x0 + (y - pos_roi_y0) * ASPECT_RATIO_X;
+			pos_roi_y1 = pos_roi_y0 + (y - pos_roi_y0) * ASPECT_RATIO_Y;
 		}
 
     	image.copyTo(image_copy);
         //redraw ROI selection
-		rectangle(image_copy, cvPoint(roi_x0, roi_y0), cvPoint(roi_x1, roi_y1), CV_RGB(255, 0, 255), 1);	
+		rectangle(image_copy, cvPoint(pos_roi_x0, pos_roi_y0), cvPoint(pos_roi_x1, pos_roi_y1), CV_RGB(255, 0, 255), 1);	
         imshow(window_name,image_copy);
     }
 
+	if (event == CV_EVENT_RBUTTONDOWN)
+	{
+		if(!neg_startDraw)
+		{
+			neg_roi_x0=x;
+			neg_roi_y0=y;
+			neg_startDraw = 1;
+		}
+	}
+	if(event == CV_EVENT_RBUTTONUP)
+	{
+		neg_startDraw = 0;
+	}
+	if (event == CV_EVENT_MOUSEMOVE && neg_startDraw && pos_chosen)
+	{
+		neg_roi_x1 = x;
+		neg_roi_y1 = y;
+
+
+		image.copyTo(image_copy);
+		//redraw ROI selection
+		rectangle(image_copy, cvPoint(pos_roi_x0, pos_roi_y0), cvPoint(pos_roi_x1, pos_roi_y1), CV_RGB(255, 0, 255), 1);
+		rectangle(image_copy, cvPoint(neg_roi_x0, neg_roi_y0), cvPoint(x, y), CV_RGB(0, 255, 255), 1);	
+		imshow(window_name,image_copy);
+	}
 }
 
 #ifdef IMAGE
@@ -177,22 +213,22 @@ int main(int argc, char** argv)
 
                         numOfRec++;
                         
-                        cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1) << endl;
-                        //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1) << endl;
+                        cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,pos_roi_x0,pos_roi_y0,pos_roi_x1,pos_roi_y1) << endl;
+                        //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,pos_roi_x1,pos_roi_y1,pos_roi_x0-pos_roi_x1,pos_roi_y0-pos_roi_y1) << endl;
                         // currently two draw directions possible:
                         //        from top left to bottom right or vice versa
-                        if(roi_x0<roi_x1 && roi_y0<roi_y1)
+                        if(pos_roi_x0<pos_roi_x1 && pos_roi_y0<pos_roi_y1)
                         {
-							numOfRec_global++;
-                            cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
+							numOfRec_pos++;
+                            cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,pos_roi_x0,pos_roi_y0,pos_roi_x1-pos_roi_x0,pos_roi_y1-pos_roi_y0) << endl;
                             // append rectangle coord to previous line content
-                            Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
+                            Rect ROI(pos_roi_x0,pos_roi_y0,(pos_roi_x1-pos_roi_x0),(pos_roi_y1-pos_roi_y0));
                             outImg = Mat(inpImg,ROI);
 							//writing the cropped image to a file
 #ifdef __linux__
-							outFileName = ("posSamples/Sample-" + IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("posSamples/Sample-" + IntToString(numOfRec_pos) + ".jpg");
 #elif _WIN32
-							outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_pos) + ".jpg");
 #endif
 							float height = 50;
 							float ratio = outImg.rows / height;
@@ -202,20 +238,20 @@ int main(int argc, char** argv)
 							strPostfix += " " + IntToString(0) + " " + IntToString(0) + " " + IntToString((int)ceil(width)) + " " + IntToString((int)ceil(height));
 							output << outFileName << " " << "1" << strPostfix << "\n";
                         }
-						else if (roi_x0>roi_x1 && roi_y0>roi_y1)
-                                                    //(roi_x0>roi_x1 && roi_y0>roi_y1)
+						else if (pos_roi_x0>pos_roi_x1 && pos_roi_y0>pos_roi_y1)
+                                                    //(pos_roi_x0>pos_roi_x1 && pos_roi_y0>pos_roi_y1)
                         {
-							numOfRec_global++;
-                            printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
+							numOfRec_pos++;
+                            printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,pos_roi_x1,pos_roi_y1,pos_roi_x0-pos_roi_x1,pos_roi_y0-pos_roi_y1);
                             // append rectangle coord to previous line content
 
-                            Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
+                            Rect ROI(pos_roi_x1,pos_roi_y1,(pos_roi_x0-pos_roi_x1),(pos_roi_y0-pos_roi_y1));
                             outImg = Mat(inpImg,ROI);
 							//writing the cropped image to a file
 #ifdef __linux__
-							outFileName = ("posSamples/Sample-"+ IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("posSamples/Sample-"+ IntToString(numOfRec_pos) + ".jpg");
 #elif _WIN32
-							outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_global) + ".jpg");
+							outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_pos) + ".jpg");
 #endif
 							//create a sample of height 100 X something  -- this number changes with the type of object to be trained
 							float height = 50; 
@@ -230,7 +266,7 @@ int main(int argc, char** argv)
                         break;
 
                 }
-				roi_x0 = roi_x1 = roi_y0 = roi_y1 = 0;
+				pos_roi_x0 = pos_roi_x1 = pos_roi_y0 = pos_roi_y1 = 0;
             }
             while(iKey!=66);
 
@@ -266,7 +302,7 @@ int main(int argc, char** argv)
     output_file = argv[1];
 #else
     //input_video = "Data/inpVideo.mp4"; //linux
-	input_video = "..\\Data\\in_5.mp4"; //windows
+	input_video = "..\\Data\\video2.mp4"; //windows
     output_file = "positive.txt";
 #endif
     //getting ready to mark the image
@@ -288,9 +324,10 @@ int main(int argc, char** argv)
 		capture >> inpImg;
 		if (inpImg.empty())
 			break;
+		cv::resize(inpImg, inpImg, cv::Size(inpImg.cols / 3, inpImg.rows / 3));
 
 		// Assign postfix/prefix info
-		outFileName = "Sample-"+ IntToString(numOfRec_global) + ".jpg";
+		outFileName = "";// "Sample-" + IntToString(numOfRec_pos) + ".jpg";
 		strPostfix="";
 		numOfRec = 0;
 
@@ -309,25 +346,26 @@ int main(int argc, char** argv)
                    output.close();
                    return 0;
             case 32:
+				   pos_chosen = false;
                    numOfRec++;
                    
-                   cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,roi_x0,roi_y0,roi_x1,roi_y1) << endl;
-                   //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1) << endl;
+                   cout << format("   %d. rect x=%d\ty=%d\tx2h=%d\ty2=%d\n",numOfRec,pos_roi_x0,pos_roi_y0,pos_roi_x1,pos_roi_y1) << endl;
+                   //cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,pos_roi_x1,pos_roi_y1,pos_roi_x0-pos_roi_x1,pos_roi_y0-pos_roi_y1) << endl;
                    // currently two draw directions possible:
                    //        from top left to bottom right or vice versa
-                   if(roi_x0<roi_x1 && roi_y0<roi_y1)
+                   if(pos_roi_x0<pos_roi_x1 && pos_roi_y0<pos_roi_y1)
                    {
-					   numOfRec_global++;
-                       cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x0,roi_y0,roi_x1-roi_x0,roi_y1-roi_y0) << endl;
+					   numOfRec_pos++;
+                       cout << format("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,pos_roi_x0,pos_roi_y0,pos_roi_x1-pos_roi_x0,pos_roi_y1-pos_roi_y0) << endl;
                        // append rectangle coord to previous line content
-                       //strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x1-roi_x0)+" "+IntToString(roi_y1-roi_y0);
-                       Rect ROI(roi_x0,roi_y0,(roi_x1-roi_x0),(roi_y1-roi_y0));
+                       //strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(pos_roi_x1-pos_roi_x0)+" "+IntToString(pos_roi_y1-pos_roi_y0);
+                       Rect ROI(pos_roi_x0,pos_roi_y0,(pos_roi_x1-pos_roi_x0),(pos_roi_y1-pos_roi_y0));
                        outImg = Mat(inpImg,ROI);
 					   //writing the cropped image to a file
 #ifdef __linux__
-					   outFileName = ("posSamples/Sample-" + IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("posSamples/Sample-" + IntToString(numOfRec_pos) + ".jpg");
 #elif _WIN32
-					   outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("..\\posSamples\\Sample-" + IntToString(numOfRec_pos) + ".jpg");
 #endif
 					   float height = 50;
 					   float ratio = outImg.rows / height;
@@ -338,19 +376,19 @@ int main(int argc, char** argv)
 					   output << outFileName << " " << "1" << strPostfix << "\n";
 
                    }
-                   else if (roi_x0>roi_x1 && roi_y0>roi_y1)
+                   else if (pos_roi_x0>pos_roi_x1 && pos_roi_y0>pos_roi_y1)
                    {
-					   numOfRec_global++;
-                	   printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,roi_x1,roi_y1,roi_x0-roi_x1,roi_y0-roi_y1);
+					   numOfRec_pos++;
+                	   printf("   %d. rect x=%d\ty=%d\twidth=%d\theight=%d\n",numOfRec,pos_roi_x1,pos_roi_y1,pos_roi_x0-pos_roi_x1,pos_roi_y0-pos_roi_y1);
                        // append rectangle coord to previous line content
-                      // strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(roi_x0-roi_x1)+" "+IntToString      (roi_y0-roi_y1);
-                       Rect ROI(roi_x1,roi_y1,(roi_x0-roi_x1),(roi_y0-roi_y1));
+                      // strPostfix+=" "+IntToString(0)+" "+IntToString(0)+" "+IntToString(pos_roi_x0-pos_roi_x1)+" "+IntToString      (pos_roi_y0-pos_roi_y1);
+                       Rect ROI(pos_roi_x1,pos_roi_y1,(pos_roi_x0-pos_roi_x1),(pos_roi_y0-pos_roi_y1));
                        outImg = Mat(inpImg,ROI);
 					   //writing the cropped image to a file
 #ifdef __linux__
-					   outFileName = ("posSamples/Sample-" + IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("posSamples/Sample-" + IntToString(numOfRec_pos) + ".jpg");
 #elif _WIN32
-					   outFileName = ("..\\posSamples\\Sample-"+ IntToString(numOfRec_global) + ".jpg");
+					   outFileName = ("..\\posSamples\\Sample-"+ IntToString(numOfRec_pos) + ".jpg");
 #endif
 					   float height = 50;
 					   float ratio = outImg.rows / height;
@@ -361,9 +399,49 @@ int main(int argc, char** argv)
 					   output << outFileName << " " << "1" << strPostfix << "\n";
 
                    }
+//--------------------------------------------------
+				   if (neg_roi_x0<neg_roi_x1 && neg_roi_y0<neg_roi_y1)
+				   {
+					   numOfRec_neg++;
+					   Rect ROI(neg_roi_x0, neg_roi_y0, (neg_roi_x1 - neg_roi_x0), (neg_roi_y1 - neg_roi_y0));
+					   outImg = Mat(inpImg, ROI);
+					   //writing the cropped image to a file
+#ifdef __linux__
+					   outFileName = ("negSamples/Sample-" + IntToString(numOfRec_neg) + ".jpg");
+#elif _WIN32
+					   outFileName = ("..\\negSamples\\Sample-" + IntToString(numOfRec_neg) + ".jpg");
+#endif
+					   float height = 80;
+					   float ratio = outImg.rows / height;
+					   float width = outImg.cols / ratio;
+					   resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
+					   cv::imwrite(outFileName, outImg);
+
+				   }
+				   else if (pos_roi_x0>pos_roi_x1 && pos_roi_y0>pos_roi_y1)
+				   {
+					   numOfRec_neg++;
+					   // append rectangle coord to previous line content
+					   Rect ROI(neg_roi_x1, neg_roi_y1, (neg_roi_x0 - neg_roi_x1), (neg_roi_y0 - neg_roi_y1));
+					   outImg = Mat(inpImg, ROI);
+					   //writing the cropped image to a file
+#ifdef __linux__
+					   outFileName = ("negSamples/Sample-" + IntToString(numOfRec_neg) + ".jpg");
+#elif _WIN32
+					   outFileName = ("..\\negSamples\\Sample-" + IntToString(numOfRec_neg) + ".jpg");
+#endif
+					   float height = 80;
+					   float ratio = outImg.rows / height;
+					   float width = outImg.cols / ratio;
+					   resize(outImg, outImg, Size((int)ceil(width), (int)ceil(height)));
+					   cv::imwrite(outFileName, outImg);
+
+				   }
+
                    break;
         }
-		roi_x0 = roi_x1 = roi_y0 = roi_y1 = 0;
+		pos_roi_x0 = pos_roi_x1 = pos_roi_y0 = pos_roi_y1 = 0;
+		neg_roi_x0 = neg_roi_x1 = neg_roi_y0 = neg_roi_y1 = 0;
 	}
 
     output.close();
